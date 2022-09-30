@@ -1,47 +1,46 @@
-import { useState } from 'react';
+import { useReducer, useEffect } from 'react';
 import { FeedbackOptions } from './FeedbackOptions';
 import { Statistics } from './Statistics';
 import { Notification } from './Notification';
 import { Section } from './Section';
-
+import {
+  initialState,
+  actionsTypes,
+  reducer,
+} from '../../helpers/reducerForFeedback';
 export const Feedback = () => {
-  const [state, setState] = useState({ good: 0, neutral: 0, bad: 0 });
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { good, neutral, bad, total, percentage } = state;
 
-  const { good, bad, neutral } = state;
   const stateKeys = Object.keys(state);
-  const stateArr = Object.values(state);
+  const stateNew = stateKeys.slice(0, stateKeys.length - 2);
+  console.log(stateNew);
+
+  useEffect(() => {
+    dispatch({ type: actionsTypes.total });
+    dispatch({ type: actionsTypes.percentage });
+
+    // action={type,payload}
+  }, [good, neutral, bad]);
 
   const addFeedback = option => {
-    console.log(option);
-    setState(prevState => ({ ...prevState, [option]: prevState[option] + 1 }));
-  };
-
-  const countTotalFeedback = () => {
-    const totalFeedback = stateArr.reduce((total, state) => {
-      return total + state;
-    }, 0);
-    return totalFeedback;
-  };
-
-  const countPositiveFeedbackPercentage = () => {
-    const { good } = state;
-    return good === 0 ? 0 : Math.round((good * 100) / countTotalFeedback());
+    dispatch({ type: option });
   };
 
   return (
     <>
       <Section title={'Please leave feedback'}>
-        <FeedbackOptions options={stateKeys} onLeaveFeedback={addFeedback} />
+        <FeedbackOptions options={stateNew} onLeaveFeedback={addFeedback} />
         {/* !render */}
-        {countTotalFeedback() === 0 ? (
+        {total === 0 ? (
           <Notification message={'There is no feedback'} />
         ) : (
           <Statistics
             good={good}
             bad={bad}
             neutral={neutral}
-            total={countTotalFeedback()}
-            positivePercentage={countPositiveFeedbackPercentage()}
+            total={total}
+            positivePercentage={percentage}
           />
         )}
       </Section>
